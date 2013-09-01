@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+<style type="text/css">
+body {
+    background-color: #fff;
+}
+.header {
+    position: fixed;
+    top: 17px;
+    left: 8px;
+    width: 910px;
+    height: 103px;
+    background-color: #fff;
+    padding: 10px;
+    text-align: center;
+}
+.main {
+    position: fixed;
+    background-color: #fff;
+    top: 120px;
+}
+.maintitle {
+    color: #000;
+    font-family: helvetica;
+    font-size: 50px;
+    font-weight: 100;
+}
+.title {
+    font-family: helvetica;
+    font-size: 25px;
+    font-weight: 100;
+    line-height: 1;
+
+}
+.subtitle {
+    font-family: helvetica;
+    font-size: 14px;
+    line-height: 1.0em;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #000;
+    font-weight: bolder;
+}
+.nav {
+    position: fixed;
+    width: 200px;
+    height: 586px;
+    top: 17px;
+    left: 920px;
+    background-color: #f6f6f6;
+    padding: 10px;
+}
+
+.box {
+    border: 5px #fff solid;
+    margin-top: 10px;
+    font-size: 20px;
+    width: 188px;
+    font-family: helvetica;
+    color: rgb(66, 146, 198);
+}
+.counties {
+  fill: none;
+}
+
+button {
+    font-family: helvetica;
+}
+
+.states {
+  fill: none;
+  stroke: #fff;
+  stroke-linejoin: round;
+}
+
+.q0-9 { fill:rgb(247,251,255); }
+.q1-9 { fill:rgb(222,235,247); }
+.q2-9 { fill:rgb(198,219,239); }
+.q3-9 { fill:rgb(158,202,225); }
+.q4-9 { fill:rgb(107,174,214); }
+.q5-9 { fill:rgb(66,146,198); }
+.q6-9 { fill:rgb(33,113,181); }
+.q7-9 { fill:rgb(8,81,156); }
+.q8-9 { fill:rgb(8,48,107); }
+
+</style>
+</head>
+<body>
+    <div class="main">
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+window.onload = function() {
+  document.getElementById("location").focus();
+}
+
+var width = 910,
+    height = 500;
+
+var rateById = d3.map();
+
+var quantize = d3.scale.quantize()
+    .domain([0, .15])
+    .range(d3.range(9).map(function(i) { return "q" + i + "-9"; }));
+
+var path = d3.geo.path();
+
+var svg = d3.select("div").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+queue()
+    .defer(d3.json, "us.json")
+    .defer(d3.tsv, "unemployment.tsv", function(d) { rateById.set(d.id, +d.rate); })
+    .await(ready);
+
+function ready(error, us) {
+  svg.append("g")
+      .attr("class", "counties")
+    .selectAll("path")
+      .data(topojson.feature(us, us.objects.counties).features)
+    .enter().append("path")
+      .attr("class", function(d) { return quantize(rateById.get(d.id)); })
+      .attr("d", path);
+
+  svg.append("path")
+      .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+      .attr("class", "states")
+      .attr("d", path);
+}
+</script>
+    <div class="header">
+        <span class="maintitle">Live Influenza Tracking</span>
+        <br /><span class="subtitle">
+        Realtime information on the spread of influenza</span></div>
+    <div class="nav">
+    <span class="title">where are you?</span>
+    <input id="location" type="text" class="box">
+    <button type="submit" value="go">go</button>
+</div>
+</body>
+</html>
